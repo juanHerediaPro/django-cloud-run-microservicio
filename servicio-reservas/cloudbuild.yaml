@@ -20,43 +20,60 @@ steps:
       - 'push'
       - 'us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:latest'
 
-  # Paso 3: Crear/Actualizar el Cloud Run Job para ejecutar migraciones
+  # Paso 3: Crear o actualizar el Cloud Run Job de Migraciones
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
-      - 'run'
-      - 'jobs'
-      - 'deploy'
-      - 'django-migrations-job'
-      - '--image=us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA'
-      - '--region=us-central1'
-      - '--set-env-vars=DATABASE_NAME=reservas,CLOUD_SQL_CONNECTION_NAME=practica2-477009:us-central1:id-postgres-bd'
-      - '--set-secrets=DATABASE_USER=USER:latest,DATABASE_PASSWORD=PASSWORD:latest'
-      - '--add-cloudsql-instances=practica2-477009:us-central1:id-postgres-bd'
-      - '--service-account=57187527650-compute@developer.gserviceaccount.com'
-      - '--command=python'
-      - '--args=manage.py,migrate'
+      [
+        "run", "jobs", "update", "django-migrations-job",
+        "--image=us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA",
+        "--region=us-central1",
+        "--set-cloudsql-instances=practica2-477009:us-central1:id-postgres-bd",
+        "--set-env-vars=DATABASE_NAME=reservas,CLOUD_SQL_CONNECTION_NAME=practica2-477009:us-central1:id-postgres-bd",
+        "--set-secrets=DATABASE_USER=USER:latest,DATABASE_PASSWORD=PASSWORD:latest",
+        "--service-account=57187527650-compute@developer.gserviceaccount.com"
+      ]
+    # Si el job no existe, lo creamos
+    id: 'update-job'
+    waitFor: ['-']
 
-  # Paso 4: Desplegar el servicio en Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
-      - 'run'
-      - 'deploy'
-      - 'servicio-reservas'
-      - '--image=us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA'
-      - '--region=us-central1'
-      - '--platform=managed'
-      - '--allow-unauthenticated'
-      - '--service-account=57187527650-compute@developer.gserviceaccount.com'
-      - '--add-cloudsql-instances=practica2-477009:us-central1:id-postgres-bd'
-      - '--set-env-vars=DATABASE_NAME=reservas,CLOUD_SQL_CONNECTION_NAME=practica2-477009:us-central1:id-postgres-bd'
-      - '--set-secrets=DATABASE_USER=USER:latest,DATABASE_PASSWORD=PASSWORD:latest'
-      - '--port=8080'
-      - '--memory=512Mi'
-      - '--cpu=1'
-      - '--max-instances=10'
-      - '--min-instances=0'
+      [
+        "run", "jobs", "create", "django-migrations-job",
+        "--image=us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA",
+        "--region=us-central1",
+        "--set-cloudsql-instances=practica2-477009:us-central1:id-postgres-bd",
+        "--set-env-vars=DATABASE_NAME=reservas,CLOUD_SQL_CONNECTION_NAME=practica2-477009:us-central1:id-postgres-bd",
+        "--set-secrets=DATABASE_USER=USER:latest,DATABASE_PASSWORD=PASSWORD:latest",
+        "--service-account=57187527650-compute@developer.gserviceaccount.com",
+        "--command=python",
+        "--args=manage.py,migrate"
+      ]
+    id: 'create-job'
+    waitFor: ['update-job']
+
+  # Paso 4: Desplegar en Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      [
+        "run", "deploy", "servicio-reservas",
+        "--image=us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA",
+        "--region=us-central1",
+        "--platform=managed",
+        "--allow-unauthenticated",
+        "--service-account=57187527650-compute@developer.gserviceaccount.com",
+        "--add-cloudsql-instances=practica2-477009:us-central1:id-postgres-bd",
+        "--set-env-vars=DATABASE_NAME=reservas,CLOUD_SQL_CONNECTION_NAME=practica2-477009:us-central1:id-postgres-bd",
+        "--set-secrets=DATABASE_USER=USER:latest,DATABASE_PASSWORD=PASSWORD:latest",
+        "--port=8080",
+        "--memory=512Mi",
+        "--cpu=1",
+        "--max-instances=10",
+        "--min-instances=0"
+      ]
 
 images:
   - 'us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA'
