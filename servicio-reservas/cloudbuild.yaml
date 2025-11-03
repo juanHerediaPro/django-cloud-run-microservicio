@@ -1,13 +1,14 @@
 steps:
   # Paso 1: Construir la imagen Docker
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - 'build'
-      - '-t'
-      - 'us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA'
-      - '-t'
-      - 'us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:latest'
-      - '.'
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+    [
+      "build",
+      "-t", "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA",
+      "-t", "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:latest",
+      "-f", "servicio-reservas/Dockerfile",
+      "servicio-reservas"
+    ]
 
   # Paso 2: Subir la imagen al Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
