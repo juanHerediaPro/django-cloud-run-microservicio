@@ -1,61 +1,31 @@
 steps:
   # Paso 1: Construir la imagen Docker
-- name: 'gcr.io/cloud-builders/docker'
-  args:
-    [
-      "build",
-      "-t", "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA",
-      "-t", "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:latest",
-      "-f", "servicio-reservas/Dockerfile",
-      "servicio-reservas"
-    ]
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        "build",
+        "-t", "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA",
+        "-t", "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:latest",
+        "-f", "servicio-reservas/Dockerfile",
+        "servicio-reservas"
+      ]
 
   # Paso 2: Subir la imagen al Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
-      - 'push'
-      - 'us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA'
+      [
+        "push",
+        "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA"
+      ]
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
-      - 'push'
-      - 'us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:latest'
-
-  # Paso 3: Crear o actualizar el Cloud Run Job de Migraciones
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
       [
-        "run", "jobs", "update", "django-migrations-job",
-        "--image=us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA",
-        "--region=us-central1",
-        "--set-cloudsql-instances=practica2-477009:us-central1:id-postgres-bd",
-        "--set-env-vars=DATABASE_NAME=reservas,CLOUD_SQL_CONNECTION_NAME=practica2-477009:us-central1:id-postgres-bd",
-        "--set-secrets=DATABASE_USER=USER:latest,DATABASE_PASSWORD=PASSWORD:latest",
-        "--service-account=57187527650-compute@developer.gserviceaccount.com"
+        "push",
+        "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:latest"
       ]
-    # Si el job no existe, lo creamos
-    id: 'update-job'
-    waitFor: ['-']
 
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      [
-        "run", "jobs", "create", "django-migrations-job",
-        "--image=us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA",
-        "--region=us-central1",
-        "--set-cloudsql-instances=practica2-477009:us-central1:id-postgres-bd",
-        "--set-env-vars=DATABASE_NAME=reservas,CLOUD_SQL_CONNECTION_NAME=practica2-477009:us-central1:id-postgres-bd",
-        "--set-secrets=DATABASE_USER=USER:latest,DATABASE_PASSWORD=PASSWORD:latest",
-        "--service-account=57187527650-compute@developer.gserviceaccount.com",
-        "--command=python",
-        "--args=manage.py,migrate"
-      ]
-    id: 'create-job'
-    waitFor: ['update-job']
-
-  # Paso 4: Desplegar en Cloud Run
+  # Paso 3: Desplegar en Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -77,8 +47,9 @@ steps:
       ]
 
 images:
-  - 'us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA'
-  - 'us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:latest'
+  - "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:$SHORT_SHA"
+  - "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-reservas:latest"
 
 options:
   logging: CLOUD_LOGGING_ONLY
+
