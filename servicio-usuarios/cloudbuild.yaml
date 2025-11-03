@@ -2,48 +2,53 @@ steps:
   # Paso 1: Construir la imagen Docker
   - name: 'gcr.io/cloud-builders/docker'
     args:
-      - 'build'
-      - '-t'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/django-despliegue/servicio-usuarios:$SHORT_SHA'
-      - '-t'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/django-despliegue/servicio-usuarios:latest'
-      - '.'
+      [
+        "build",
+        "-t", "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-usuarios:$SHORT_SHA",
+        "-t", "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-usuarios:latest",
+        "-f", "servicio-usuarios/Dockerfile",
+        "servicio-usuarios"
+      ]
 
   # Paso 2: Subir la imagen al Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
-      - 'push'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/django-despliegue/servicio-usuarios:$SHORT_SHA'
+      [
+        "push",
+        "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-usuarios:$SHORT_SHA"
+      ]
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
-      - 'push'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/django-despliegue/servicio-usuarios:latest'
+      [
+        "push",
+        "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-usuarios:latest"
+      ]
 
   # Paso 3: Desplegar en Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
-      - 'run'
-      - 'deploy'
-      - 'servicio-usuarios'
-      - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/django-despliegue/servicio-usuarios:$SHORT_SHA'
-      - '--region=us-central1'
-      - '--platform=managed'
-      - '--allow-unauthenticated'
-      - '--service-account=57187527650-compute@developer.gserviceaccount.com'
-      - '--add-cloudsql-instances=practica2-477009:us-central1:id-postgres-bd'
-      - '--set-env-vars=DATABASE_NAME=reservas,CLOUD_SQL_CONNECTION_NAME=practica2-477009:us-central1:id-postgres-bd'
-      - '--set-secrets=DATABASE_USER=USER:latest,DATABASE_PASSWORD=PASSWORD:latest'
-      - '--port=8080'
-      - '--memory=512Mi'
-      - '--cpu=1'
-      - '--max-instances=10'
-      - '--min-instances=0'
+      [
+        "run", "deploy", "servicio-usuarios",
+        "--image=us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-usuarios:$SHORT_SHA",
+        "--region=us-central1",
+        "--platform=managed",
+        "--allow-unauthenticated",
+        "--service-account=57187527650-compute@developer.gserviceaccount.com",
+        "--add-cloudsql-instances=practica2-477009:us-central1:id-postgres-bd",
+        "--set-env-vars=DATABASE_NAME=reservas,CLOUD_SQL_CONNECTION_NAME=practica2-477009:us-central1:id-postgres-bd",
+        "--set-secrets=DATABASE_USER=USER:latest,DATABASE_PASSWORD=PASSWORD:latest",
+        "--port=8080",
+        "--memory=512Mi",
+        "--cpu=1",
+        "--max-instances=10",
+        "--min-instances=0"
+      ]
 
 images:
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/django-despliegue/servicio-usuarios:$SHORT_SHA'
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/django-despliegue/servicio-usuarios:latest'
+  - "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-usuarios:$SHORT_SHA"
+  - "us-central1-docker.pkg.dev/practica2-477009/django-despliegue/servicio-usuarios:latest"
 
 options:
   logging: CLOUD_LOGGING_ONLY
