@@ -28,4 +28,4 @@ USER appuser
 EXPOSE 8080
 
 # Comando para ejecutar la aplicación
-CMD exec gunicorn --bind :8080 --workers 2 --threads 4 --timeout 0 config.wsgi:application
+CMD exec gunicorn --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 0 config.wsgi:application
